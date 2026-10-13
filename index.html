@@ -5,7 +5,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CampaignIQ | Marketing Campaign Analyzer</title>
-
 <style>
 :root {
   font-family: Inter, system-ui, -apple-system, sans-serif;
@@ -42,9 +41,9 @@ footer { margin-top: 40px; color: #8498b2; font-size: 12px; }
 a { color: #9dccff; }
 </style>
 </head>
-
 <body>
 <main>
+
 <div class="eyebrow">Independent marketing technology project · Interactive portfolio demo</div>
 <h1>CampaignIQ</h1>
 <p>Multi-channel campaign performance analyzer. Explore KPI calculations, funnel measurement gaps and evidence-based next steps. Built from an original n8n + OpenAI workflow.</p>
@@ -54,64 +53,45 @@ a { color: #9dccff; }
 <span class="tag">Optional Gemini AI analysis</span>
 
 <section class="panel">
-  <h2>1. Campaign details</h2>
-  <div class="fields">
-    <div>
-      <label>Campaign name</label>
-      <input id="campaign" placeholder="Enter campaign name" autocomplete="off">
-    </div>
-    <div>
-      <label>Campaign date</label>
-      <input id="date" type="date">
-    </div>
-    <div>
-      <label>Total campaign spend (optional)</label>
-      <input id="totalSpend" type="number" min="0" placeholder="Leave blank if unknown">
-    </div>
-    <div>
-      <label>Total revenue (optional)</label>
-      <input id="revenue" type="number" min="0" placeholder="Leave blank if unknown">
-    </div>
-  </div>
-
-  <button class="secondary" onclick="loadDemo()">Load sample campaign</button>
-
-  <h2>2. Select channels</h2>
-  <div class="channels" id="channels"></div>
+<h2>1. Campaign details</h2>
+<div class="fields">
+<div><label>Campaign name</label><input id="campaign" placeholder="Enter campaign name" autocomplete="off"></div>
+<div><label>Campaign date</label><input id="date" type="date" autocomplete="off"></div>
+<div><label>Total campaign spend (optional)</label><input id="totalSpend" type="number" autocomplete="off" min="0" placeholder="Leave blank if unknown"></div>
+<div><label>Total revenue (optional)</label><input id="revenue" type="number" autocomplete="off" min="0" placeholder="Leave blank if unknown"></div>
+</div>
+<button class="secondary" onclick="loadDemo()">Load sample campaign</button>
+<h2>2. Select channels</h2>
+<div class="channels" id="channels"></div>
 </section>
 
 <section class="panel">
-  <h2>3. Enter channel data</h2>
-  <p class="muted">Blank means not measured. An entered 0 means an actual observed zero. All numbers and sample scenarios are illustrative.</p>
-  <div id="inputs"></div>
-  <button onclick="analyze()">Analyze campaign</button>
-  <button class="secondary" onclick="resetAll()">Clear all</button>
+<h2>3. Enter channel data</h2>
+<p class="muted">Blank means not measured. An entered 0 means an actual observed zero. All numbers and sample scenarios are illustrative.</p>
+<div id="inputs"></div>
+<button onclick="analyze()">Analyze campaign</button>
+<button class="secondary" onclick="resetAll()">Clear all</button>
 </section>
 
 <section class="panel hidden" id="results">
-  <h2>4. Campaign analysis</h2>
-  <div id="summary"></div>
-
-  <h2>Overall KPIs</h2>
-  <div id="overall" class="grid"></div>
-
-  <h2>Channel analysis</h2>
-  <div id="channelResults"></div>
-
-  <h2>Key insights & next steps</h2>
-  <div id="insights"></div>
-
-  <h2>AI-powered interpretation</h2>
-  <p class="muted">Optional Gemini analysis. Submit only fictional or non-confidential campaign data.</p>
-  <button id="aiButton" onclick="runAI()">Generate AI interpretation</button>
-  <p id="aiStatus" class="muted" role="status"></p>
-  <div id="aiAnalysis" class="insight hidden" style="white-space:pre-wrap"></div>
-
-  <button onclick="downloadReport()">Download report (.txt)</button>
+<h2>4. Campaign analysis</h2>
+<div id="summary"></div>
+<h2>Overall KPIs</h2>
+<div id="overall" class="grid"></div>
+<h2>Channel analysis</h2>
+<div id="channelResults"></div>
+<h2>Key insights & next steps</h2>
+<div id="insights"></div>
+<h2>AI-powered interpretation</h2>
+<p class="muted">Optional Gemini analysis. Submit only fictional or non-confidential campaign data.</p>
+<button id="aiButton" onclick="runAI()">Generate AI interpretation</button>
+<p id="aiStatus" class="muted" role="status"></p>
+<div id="aiAnalysis" class="insight hidden" style="white-space:pre-wrap"></div>
+<button onclick="downloadReport()">Download report (.txt)</button>
 </section>
 
 <footer>
-This portfolio demonstration uses deterministic JavaScript calculations and transparent rules. It is adapted from an original n8n AI marketing campaign analysis workflow. Sample data is fictional. KPI calculations run locally. When you request AI interpretation, campaign data is sent to a Cloudflare Worker and Google Gemini. Do not enter confidential information.
+This portfolio demonstration uses deterministic JavaScript calculations and transparent rules, not a live AI model. It is adapted from an original n8n AI marketing campaign analysis workflow. Sample data is fictional. KPI calculations run locally. When you request AI interpretation, campaign data is sent to a Cloudflare Worker and Google Gemini. Do not enter confidential information.
 </footer>
 </main>
 
@@ -128,11 +108,13 @@ const defs = {
 };
 
 const $ = id => document.getElementById(id);
+
 const selected = () => Object.keys(defs).filter(k =>
   document.querySelector(`[data-channel="${CSS.escape(k)}"]`)?.checked
 );
 
 const AI_ENDPOINT = 'https://campaigniq-ai.pshirvani90.workers.dev/';
+
 let report = '';
 let lastAIData = null;
 
@@ -359,6 +341,77 @@ This report uses browser-based deterministic calculations, not live AI.`;
   $('results').scrollIntoView({behavior:'smooth'});
 }
 
+function buildFallbackAnalysis() {
+  const data = lastAIData;
+  if (!data) return 'No campaign analysis is available.';
+
+  const lines = [
+    'Rule-based fallback — not AI-generated',
+    '',
+    'CAMPAIGN OVERVIEW',
+    `Campaign: ${data.name || 'Untitled campaign'}`,
+    `Channels included: ${Object.keys(data.channels).join(', ') || 'None'}`,
+    ''
+  ];
+
+  const spend = data.metrics.spend;
+  const revenue = data.metrics.revenue;
+
+  if (spend !== null && revenue !== null && spend > 0) {
+    lines.push(`Overall ROAS: ${(revenue / spend).toFixed(2)}×.`);
+    lines.push('Compare ROAS with campaign targets and profit margins before assessing profitability.');
+  } else {
+    lines.push('Overall ROAS cannot be evaluated because spend or revenue is missing or spend is zero.');
+  }
+
+  lines.push('', 'CHANNEL OBSERVATIONS');
+
+  for (const [channel, v] of Object.entries(data.channels)) {
+    lines.push('', channel + ':');
+
+    const ctr = ratio(v.clicks ?? null, v.impressions ?? null, 100);
+    const cpl = ratio(v.spend ?? null, v.leads ?? null);
+    const cpa = ratio(v.spend ?? null, v.conversions ?? null);
+
+    if (ctr !== null)
+      lines.push(`- CTR: ${ctr.toFixed(2)}%. Review against channel-specific targets.`);
+    if (cpl !== null)
+      lines.push(`- Cost per lead: $${cpl.toFixed(2)}.`);
+    if (cpa !== null)
+      lines.push(`- Cost per acquisition: $${cpa.toFixed(2)}.`);
+
+    if (v.clicks > 0 && v.leads === 0) {
+      lines.push('- Clicks are recorded but leads are zero. Check landing page performance and tracking.');
+    } else if (v.leads > 0 && v.conversions === 0) {
+      lines.push('- Leads exist but recorded conversions are zero. Review follow-up and conversion tracking.');
+    } else if (v.leads === null || v.leads === undefined) {
+      lines.push('- Lead data is missing. Confirm whether lead tracking is configured.');
+    } else {
+      lines.push('- Compare available results with objectives and historical performance.');
+    }
+
+    if (channel === 'Email Marketing' && v.sent > 0 && v.opens !== null) {
+      lines.push(`- Email open rate: ${(v.opens / v.sent * 100).toFixed(2)}%.`);
+    }
+
+    if (channel === 'Event / Experiential' && v.rsvps > 0 && v.attendees !== null) {
+      lines.push(`- RSVP-to-attendance rate: ${(v.attendees / v.rsvps * 100).toFixed(2)}%.`);
+    }
+  }
+
+  lines.push(
+    '',
+    'RECOMMENDED NEXT STEPS',
+    '1. Validate tracking and fill missing funnel metrics before making budget decisions.',
+    '2. Compare channel-level costs and conversion rates with campaign targets and previous periods.',
+    '3. Test one optimization at a time, such as creative, landing pages, or lead follow-up, and measure the impact.',
+    '',
+    'This is a deterministic interpretation based on the supplied campaign data. It is not generated by Gemini and does not use external benchmarks.'
+  );
+
+  return lines.join('\n');
+}
+
 async function runAI() {
   if (!lastAIData) {
     $('aiStatus').textContent = 'Analyze the campaign first.';
@@ -368,28 +421,31 @@ async function runAI() {
   const b = $('aiButton');
   b.disabled = true;
   b.textContent = 'Analyzing…';
+
   $('aiStatus').textContent = 'Requesting Gemini analysis…';
   $('aiAnalysis').classList.add('hidden');
 
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(),45000);
+    const timer = setTimeout(() => controller.abort(), 45000);
 
     let response;
     try {
-      response = await fetch(AI_ENDPOINT,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(lastAIData),
-        signal:controller.signal
+      response = await fetch(AI_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lastAIData),
+        signal: controller.signal
       });
     } finally {
       clearTimeout(timer);
     }
 
     const result = await response.json();
-    if (!response.ok || !result.success)
+
+    if (!response.ok || !result.success) {
       throw new Error(result.error || 'AI analysis unavailable.');
+    }
 
     $('aiAnalysis').textContent = result.analysis;
     $('aiAnalysis').classList.remove('hidden');
@@ -397,9 +453,18 @@ async function runAI() {
 
     report += '\n\nGemini AI interpretation\n' + result.analysis;
 
-  } catch(e) {
+  } catch (e) {
+    const fallback = buildFallbackAnalysis();
+
+    $('aiAnalysis').textContent = fallback;
+    $('aiAnalysis').classList.remove('hidden');
+
     $('aiStatus').textContent =
-      'AI unavailable: ' + e.message + ' Your calculated KPIs remain available.';
+      'Gemini unavailable. Showing rule-based fallback (not AI-generated).';
+
+    report += '\n\n' + fallback;
+
+    console.warn('Gemini request failed:', e.message);
   } finally {
     b.disabled = false;
     b.textContent = 'Generate AI interpretation';
@@ -407,7 +472,7 @@ async function runAI() {
 }
 
 function downloadReport() {
-  const blob = new Blob([report],{type:'text/plain'});
+  const blob = new Blob([report], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -419,7 +484,9 @@ function downloadReport() {
 function resetAll() {
   document.querySelectorAll('[data-channel]').forEach(e => e.checked = false);
 
-  ['campaign','date','totalSpend','revenue'].forEach(id => $(id).value = '');
+  ['campaign','date','totalSpend','revenue'].forEach(id => {
+    $(id).value = '';
+  });
 
   lastAIData = null;
   report = '';
@@ -443,13 +510,26 @@ function loadDemo() {
 
   const sample = {
     'Paid Social': {
-      spend:6500,impressions:240000,clicks:5600,leads:210,conversions:28
+      spend:6500,
+      impressions:240000,
+      clicks:5600,
+      leads:210,
+      conversions:28
     },
     'Email Marketing': {
-      sent:18000,opens:6300,clicks:1200,leads:95,conversions:15
+      sent:18000,
+      opens:6300,
+      clicks:1200,
+      leads:95,
+      conversions:15
     },
     'Event / Experiential': {
-      spend:4000,invites:600,rsvps:180,attendees:135,leads:65,conversions:12
+      spend:4000,
+      invites:600,
+      rsvps:180,
+      attendees:135,
+      leads:65,
+      conversions:12
     }
   };
 
