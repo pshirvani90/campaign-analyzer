@@ -9,7 +9,19 @@ const defs={
 'Influencer Marketing':[['spend','Spend'],['reach','Reach'],['impressions','Impressions'],['engagements','Engagements'],['clicks','Clicks'],['leads','Leads'],['conversions','Conversions']],
 'Other':[['spend','Spend'],['impressions','Impressions / Reach'],['engagements','Engagements'],['clicks','Clicks / Responses'],['leads','Leads'],['conversions','Conversions']]};
 const $=id=>document.getElementById(id),selected=()=>Object.keys(defs).filter(k=>document.querySelector(`[data-channel="${CSS.escape(k)}"]`)?.checked);let report='';let lastAIData=null;const AI_ENDPOINT='https://campaigniq-ai.pshirvani90.workers.dev/';
-function init(){ $('date').value=new Date().toISOString().slice(0,10);$('channels').innerHTML=Object.keys(defs).map(k=>`<label class="channel"><input type="checkbox" data-channel="${k}" onchange="renderInputs()">${k}</label>`).join('');loadDemo()}
+
+function init() {
+  $('date').value = '';
+  $('campaign').value = '';
+  $('totalSpend').value = '';
+  $('revenue').value = '';
+
+  $('channels').innerHTML = Object.keys(defs)
+    .map(k => `<label class="channel"><input type="checkbox" data-channel="${k}" onchange="renderInputs()">${k}</label>`)
+    .join('');
+
+  renderInputs();
+}
 function renderInputs(){let existing={};document.querySelectorAll('[data-input]').forEach(e=>existing[e.dataset.input]=e.value);$('inputs').innerHTML=selected().map(k=>`<div class="panel"><h2>${k}</h2>${k==='Other'?'<label>Custom channel name<input id="customName" placeholder="e.g. Direct Mail"></label>':''}<div class="fields">${defs[k].map(([f,l])=>{let id=k+'::'+f;return `<div><label>${l}</label><input data-input="${id}" type="number" min="0" step="any" placeholder="Not provided" value="${existing[id]??''}"></div>`}).join('')}</div></div>`).join('')||'<p>Select at least one channel above.</p>'}
 function num(id){let e=document.querySelector(`[data-input="${CSS.escape(id)}"]`);return !e||e.value.trim()===''?null:Number(e.value)}function globalNum(id){let s=$(id).value.trim();return s===''?null:Number(s)}function ratio(a,b,scale=1){return a===null||b===null||b<=0?null:a/b*scale}function fmt(n,kind='num'){return n===null?'N/A':kind==='pct'?n.toFixed(2)+'%':kind==='money'?'$'+n.toFixed(2):kind==='roas'?n.toFixed(2)+'×':Number(n.toFixed(2)).toLocaleString()}
 function metrics(k,v){let out=[];const add=(label,a,b,scale=1,kind='pct')=>out.push({label,value:ratio(v[a],v[b],scale),kind});if(['Paid Social','Paid Search','Influencer Marketing','Other'].includes(k)){add('CTR','clicks','impressions',100);add('CPC','spend','clicks',1,'money');add('Lead conversion rate','leads','clicks',100);add('CPL','spend','leads',1,'money');add('Customer conversion rate','conversions','leads',100);add('CPA','spend','conversions',1,'money')}
